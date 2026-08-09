@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getFavorites, getHistory, getProfile, setProfileName, migrateLocalDataToAccount, trackMissionProgress } from '../../lib/store';
+import { getFavorites, getHistory, getProfile, setProfileName, migrateLocalDataToAccount, trackMissionProgress, getSelectedBanner } from '../../lib/store';
+import { BANNER_THEMES } from '../../lib/banners';
 import { supabase } from '../../lib/supabaseClient';
 import BannerBackground from '../../components/BannerBackground';
 
@@ -14,7 +15,8 @@ const SECTIONS = [
       { href: '/riwayat', label: 'Riwayat', icon: 'clock' },
       { href: '/chat', label: 'Chat', icon: 'chat' },
       { href: '/jadwal', label: 'Jadwal', icon: 'calendar' },
-      { href: '/misi', label: 'Misi', icon: 'coin' }
+      { href: '/misi', label: 'Misi', icon: 'coin' },
+      { href: '/misi/banner', label: 'Banner', icon: 'banner' }
     ]
   },
   {
@@ -31,7 +33,8 @@ const ICONS = {
   chat: <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z" />,
   calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 9h18M8 3v4M16 3v4" /></>,
   gear: <><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009.08 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9.08a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" /></>,
-  coin: <><circle cx="12" cy="12" r="9" /><path d="M12 7v10M9.5 9.5c0-1.5 1.2-2.2 2.5-2.2s2.5.7 2.5 2c0 2-5 1.5-5 3.7 0 1.3 1.2 2 2.5 2s2.5-.7 2.5-2.2" /></>
+  coin: <><circle cx="12" cy="12" r="9" /><path d="M12 7v10M9.5 9.5c0-1.5 1.2-2.2 2.5-2.2s2.5.7 2.5 2c0 2-5 1.5-5 3.7 0 1.3 1.2 2 2.5 2s2.5-.7 2.5-2.2" /></>,
+  banner: <><rect x="3" y="6" width="18" height="12" rx="2" /><path d="m3 15 5-4 4 3 4-5 5 4" /></>
 };
 
 export default function ProfilePage() {
@@ -41,6 +44,7 @@ export default function ProfilePage() {
   const [favCount, setFavCount] = useState(0);
   const [histCount, setHistCount] = useState(0);
   const [session, setSession] = useState(undefined);
+  const [bannerUrl, setBannerUrl] = useState(null);
 
   useEffect(() => {
     const p = getProfile();
@@ -52,8 +56,15 @@ export default function ProfilePage() {
       setFavCount(favs.length);
       setHistCount(hist.length);
     }
+    async function refreshBanner() {
+      const id = await getSelectedBanner();
+      const item = BANNER_THEMES.find((b) => b.id === id);
+      setBannerUrl(item?.url || null);
+    }
     refreshCounts();
+    refreshBanner();
     window.addEventListener('hidakaxin:storage', refreshCounts);
+    window.addEventListener('hidakaxin:storage', refreshBanner);
     trackMissionProgress('open_profile', 1);
 
     if (supabase) {
@@ -68,12 +79,18 @@ export default function ProfilePage() {
       return () => {
         sub.subscription.unsubscribe();
         window.removeEventListener('hidakaxin:storage', refreshCounts);
+        window.removeEventListener('hidakaxin:storage', refreshBanner);
       };
     } else {
       setSession(null);
     }
-    return () => window.removeEventListener('hidakaxin:storage', refreshCounts);
+    return () => {
+      window.removeEventListener('hidakaxin:storage', refreshCounts);
+      window.removeEventListener('hidakaxin:storage', refreshBanner);
+    };
   }, []);
+
+  const avatarUrl = session?.user?.user_metadata?.avatar_url || session?.user?.user_metadata?.picture || null;
 
   function saveName() {
     const trimmed = draft.trim() || 'Penonton';
@@ -90,9 +107,16 @@ export default function ProfilePage() {
     <div className="mx-auto max-w-3xl pb-8">
       <BannerBackground />
       <div className="relative overflow-hidden bg-gradient-to-br from-accent to-accent-600 px-5 pb-6 pt-8 text-white">
-        <svg className="pointer-events-none absolute -right-6 -top-6 h-40 w-40 text-white/10" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2 2 22h20L12 2Z" />
-        </svg>
+        {bannerUrl ? (
+          <>
+            <video src={bannerUrl} muted loop playsInline autoPlay className="absolute inset-0 h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70" />
+          </>
+        ) : (
+          <svg className="pointer-events-none absolute -right-6 -top-6 h-40 w-40 text-white/10" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2 2 22h20L12 2Z" />
+          </svg>
+        )}
 
         <div className="relative flex items-start justify-between">
           <div className="min-w-0">
@@ -117,8 +141,13 @@ export default function ProfilePage() {
             )}
           </div>
 
-          <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full border-2 border-white/70 bg-paper-card/15 text-xl font-black">
-            {name.slice(0, 1).toUpperCase()}
+          <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white/70 bg-paper-card/15 text-xl font-black">
+            {avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
+            ) : (
+              name.slice(0, 1).toUpperCase()
+            )}
           </div>
         </div>
 
