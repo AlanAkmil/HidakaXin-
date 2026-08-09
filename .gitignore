@@ -1,0 +1,17 @@
+node_modules
+.next
+out
+.env
+.env*.local
+.vercel
+*.log
+.DS_Store
+
+# Capacitor / Android (native project itself is committed, but build output isn't)
+android/.gradle
+android/build
+android/app/build
+android/local.properties
+android/captures
+android/*.iml
+android/.idea
