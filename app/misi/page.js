@@ -8,7 +8,8 @@ import {
   claimCheckin,
   getDailyMissions,
   getAllMissionProgress,
-  claimMission
+  claimMission,
+  pullMissionDataFromServer
 } from '../../lib/store';
 
 const CHECKIN_REWARDS = [50, 75, 100, 125, 150, 200, 300];
@@ -31,6 +32,7 @@ export default function MisiPage() {
 
   useEffect(() => {
     refresh();
+    pullMissionDataFromServer().then(refresh);
     window.addEventListener('hidakaxin:storage', refresh);
     return () => window.removeEventListener('hidakaxin:storage', refresh);
   }, []);
