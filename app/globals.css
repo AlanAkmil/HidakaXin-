@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+
+  --color-paper: 246 246 248;
+  --color-paper-card: 255 255 255;
+  --color-paper-soft: 240 239 243;
+  --color-ink: 24 24 27;
+  --color-ink-soft: 91 91 99;
+  --color-ink-faint: 110 110 120;
+  --color-line: 231 230 234;
+  --color-skeleton: 236 236 239;
+  --color-scroll-thumb: 255 179 160;
+  --color-scroll-track: 246 246 248;
+}
+
+.dark {
+  --color-paper: 20 20 23;
+  --color-paper-card: 30 30 34;
+  --color-paper-soft: 38 38 43;
+  --color-ink: 240 240 242;
+  --color-ink-soft: 176 176 184;
+  --color-ink-faint: 142 142 150;
+  --color-line: 54 54 60;
+  --color-skeleton: 44 44 49;
+  --color-scroll-thumb: 122 60 45;
+  --color-scroll-track: 20 20 23;
+}
+
+body {
+  background-color: rgb(var(--color-paper));
+  color: rgb(var(--color-ink));
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--color-scroll-thumb)) rgb(var(--color-scroll-track));
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.brush-underline {
+  position: relative;
+  display: inline-block;
+}
+
+/* Card reveal - lightweight, GPU-friendly (opacity + transform only) */
+.ink-card {
+  opacity: 0;
+  transform: translateY(-14px);
+  will-change: opacity, transform;
+}
+.ink-card.in-view {
+  animation: fade-up 420ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fade-up {
+  0% { opacity: 0; transform: translateY(-14px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ink-card, .ink-card.in-view {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgb(var(--color-skeleton));
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,0.9) 50%, transparent 70%);
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
