@@ -37,13 +37,19 @@ export default function MisiPage() {
 
   async function handleCheckin() {
     const res = await claimCheckin();
-    if (!res.ok) return;
+    if (!res.ok) {
+      alert(res.error);
+      return;
+    }
     refresh();
   }
 
   async function handleClaim(id) {
     const res = await claimMission(id);
-    if (!res.ok) return;
+    if (!res.ok) {
+      alert(res.error);
+      return;
+    }
     refresh();
   }
 
