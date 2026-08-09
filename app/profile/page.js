@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getFavorites, getHistory, getProfile, setProfileName, migrateLocalDataToAccount, trackMissionProgress, getSelectedBanner } from '../../lib/store';
+import { getFavorites, getHistory, getProfile, setProfileName, migrateLocalDataToAccount, trackMissionProgress, getSelectedBanner, pullMissionDataFromServer } from '../../lib/store';
 import { BANNER_THEMES } from '../../lib/banners';
 import { supabase } from '../../lib/supabaseClient';
 import BannerBackground from '../../components/BannerBackground';
@@ -70,11 +70,11 @@ export default function ProfilePage() {
     if (supabase) {
       supabase.auth.getSession().then(({ data }) => {
         setSession(data.session);
-        if (data.session) migrateLocalDataToAccount().then(refreshCounts);
+        if (data.session) { migrateLocalDataToAccount().then(refreshCounts); pullMissionDataFromServer().then(refreshBanner); }
       });
       const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
         setSession(s);
-        if (event === 'SIGNED_IN') migrateLocalDataToAccount().then(refreshCounts);
+        if (event === 'SIGNED_IN') { migrateLocalDataToAccount().then(refreshCounts); pullMissionDataFromServer().then(refreshBanner); }
       });
       return () => {
         sub.subscription.unsubscribe();
