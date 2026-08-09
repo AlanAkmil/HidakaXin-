@@ -1,0 +1,13 @@
+{
+  "appId": "com.hidakaxin.app",
+  "appName": "HidakaXin",
+  "webDir": "www",
+  "server": {
+    "url": "https://hidakaxin.vercel.app",
+    "cleartext": false,
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}
