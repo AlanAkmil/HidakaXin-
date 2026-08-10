@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HidakaXin — Admin Panel</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0f0f0f;color:#fff;font-family:'Inter',system-ui,sans-serif;min-height:100vh}
+.wrap{max-width:900px;margin:0 auto;padding:24px 16px}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.topbar h1{font-size:20px;font-weight:800}
+.topbar button{background:#242424;border:1px solid rgba(255,255,255,.1);color:#fff;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-family:inherit}
+
+.login-box{max-width:340px;margin:80px auto;background:#1a1a1a;border-radius:16px;padding:28px;text-align:center}
+.login-box h2{font-size:18px;margin-bottom:6px}
+.login-box p{font-size:12px;color:#a0a0a0;margin-bottom:20px}
+.login-box button{width:100%;background:#fff;color:#000;border:none;padding:12px;border-radius:8px;font-weight:800;cursor:pointer;font-size:14px;font-family:inherit}
+.login-error{color:#ff6b6b;font-size:12px;margin-top:10px;min-height:16px}
+.denied{max-width:380px;margin:80px auto;text-align:center;color:#a0a0a0;font-size:14px;line-height:1.6;padding:0 16px}
+.denied code{color:#fbbf24;word-break:break-all;font-size:12px;background:#1a1a1a;padding:8px;border-radius:6px;display:block;margin:10px 0}
+.denied button{background:#242424;border:1px solid rgba(255,255,255,.1);color:#fff;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-family:inherit;margin-top:10px}
+
+.stat-row{display:flex;gap:12px;margin-bottom:20px}
+.stat-card{flex:1;background:#1a1a1a;border-radius:14px;padding:16px;text-align:center}
+.stat-num{font-size:28px;font-weight:900}
+.stat-label{font-size:11px;color:#a0a0a0;margin-top:4px}
+
+.tabs{display:flex;gap:8px;margin-bottom:16px}
+.tab-btn{background:#1a1a1a;border:1px solid rgba(255,255,255,.1);color:#a0a0a0;padding:8px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:700;font-family:inherit}
+.tab-btn.active{background:#ff5a36;color:#fff;border-color:#ff5a36}
+
+.search-box{width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,.1);color:#fff;padding:12px 14px;border-radius:10px;font-size:14px;font-family:inherit;margin-bottom:16px}
+
+.user-row{background:#1a1a1a;border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.user-row-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.user-avatar{width:42px;height:42px;border-radius:50%;background:#2a2a2a;object-fit:cover;flex-shrink:0}
+.user-body{flex:1;min-width:120px}
+.user-name{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-uid{font-size:9px;color:#555;margin-top:2px;font-family:monospace;word-break:break-all}
+.user-meta{font-size:11px;color:#a0a0a0;margin-top:2px}
+.user-coins{flex-shrink:0;text-align:center;background:#242424;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:800;color:#fbbf24;min-width:64px}
+.coin-add-form{flex-shrink:0;display:flex;gap:6px}
+.coin-add-form input{width:64px;background:#242424;border:1px solid rgba(255,255,255,.1);color:#fff;padding:8px;border-radius:6px;font-size:12px;text-align:center;font-family:inherit}
+.coin-add-form button{background:#1db954;color:#000;border:none;padding:8px 12px;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap}
+
+.chat-row{background:#1a1a1a;border-radius:12px;padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.chat-row-body{min-width:0}
+.chat-row-author{font-size:12px;font-weight:800;color:#ff5a36}
+.chat-row-text{font-size:13px;color:#e5e5e5;margin-top:2px;word-break:break-word}
+.chat-row-time{font-size:10px;color:#555;margin-top:4px}
+.chat-del-btn{flex-shrink:0;background:#3a1414;border:1px solid #5a2020;color:#ff8080;padding:6px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
+
+.empty-state{text-align:center;color:#555;padding:40px 20px;font-size:13px}
+.loading-state{text-align:center;color:#a0a0a0;padding:40px 20px;font-size:13px}
+</style>
+</head>
+<body>
+
+<div id="loginScreen" class="login-box">
+  <h2>🔐 Admin Panel</h2>
+  <p>Login pakai akun admin HidakaXin</p>
+  <button onclick="doGoogleLogin()">🔵 Login pakai Google</button>
+  <div class="login-error" id="loginError"></div>
+</div>
+
+<div id="deniedScreen" class="denied" style="display:none">
+  ⛔ Akun ini bukan admin.<br>
+  UID kamu:
+  <code id="deniedUid"></code>
+  Copy UID di atas, tambahin ke tabel <b>admin_uids</b> lewat Supabase SQL Editor
+  (lihat komentar paling bawah di <b>supabase-admin-schema.sql</b>), baru bisa akses.
+  <br><button onclick="adminSignOut()">Keluar</button>
+</div>
+
+<div id="dashboard" class="wrap" style="display:none">
+  <div class="topbar">
+    <h1>🎬 HidakaXin — Admin</h1>
+    <button onclick="adminSignOut()">Keluar</button>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat-card">
+      <div class="stat-num" id="statTotalUsers">–</div>
+      <div class="stat-label">Total Akun Terdaftar</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statTotalCoins">–</div>
+      <div class="stat-label">Total Koin Beredar</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" id="tabUsersBtn" onclick="switchTab('users')">👤 Pengguna</button>
+    <button class="tab-btn" id="tabChatBtn" onclick="switchTab('chat')">💬 Chat Publik</button>
+  </div>
+
+  <div id="usersPanel">
+    <input type="text" class="search-box" id="searchUsers" placeholder="Cari nama atau UID..." oninput="renderUserList()">
+    <div id="userList"><div class="loading-state">Memuat data pengguna...</div></div>
+  </div>
+
+  <div id="chatPanel" style="display:none">
+    <div id="chatList"><div class="loading-state">Memuat chat...</div></div>
+  </div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+// Sama persis kayak lib/supabaseClient.js di project utama.
+const SUPABASE_URL = 'https://tsdkhlgcfnbcshypnlqq.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_vpJlqrEkul72zQKAJ71APw_LVlYZlNd';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let allUsers = [];
+
+window.doGoogleLogin = async function () {
+  const errEl = document.getElementById('loginError');
+  errEl.textContent = '';
+  try {
+    await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+  } catch (e) {
+    errEl.textContent = '❌ Login gagal: ' + e.message;
+  }
+};
+
+window.adminSignOut = function () {
+  supabase.auth.signOut().then(() => window.location.reload());
+};
+
+async function boot() {
+  const { data: { session } } = await supabase.auth.getSession();
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('deniedScreen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'none';
+
+  if (!session) {
+    document.getElementById('loginScreen').style.display = 'block';
+    return;
+  }
+
+  const { data: isAdmin } = await supabase.rpc('is_admin');
+  if (!isAdmin) {
+    document.getElementById('deniedUid').textContent = session.user.id;
+    document.getElementById('deniedScreen').style.display = 'block';
+    return;
+  }
+
+  document.getElementById('dashboard').style.display = 'block';
+  await loadAllUsers();
+  await loadChat();
+}
+
+supabase.auth.onAuthStateChange(() => boot());
+boot();
+
+window.switchTab = function (tab) {
+  document.getElementById('tabUsersBtn').classList.toggle('active', tab === 'users');
+  document.getElementById('tabChatBtn').classList.toggle('active', tab === 'chat');
+  document.getElementById('usersPanel').style.display = tab === 'users' ? 'block' : 'none';
+  document.getElementById('chatPanel').style.display = tab === 'chat' ? 'block' : 'none';
+};
+
+async function loadAllUsers() {
+  try {
+    const [{ data: profiles }, { data: coins }, { data: checkins }, { data: banners }] = await Promise.all([
+      supabase.from('profiles').select('*'),
+      supabase.from('coins').select('*'),
+      supabase.from('checkins').select('*'),
+      supabase.from('owned_banners').select('*')
+    ]);
+
+    const byId = {};
+    function ensure(uid) {
+      if (!byId[uid]) byId[uid] = { uid, display_name: null, avatar_url: null, coins: 0, streak: 0, bannerCount: 0 };
+      return byId[uid];
+    }
+    (profiles || []).forEach((p) => { const u = ensure(p.user_id); u.display_name = p.display_name; u.avatar_url = p.avatar_url; });
+    (coins || []).forEach((c) => { ensure(c.user_id).coins = c.balance || 0; });
+    (checkins || []).forEach((c) => { ensure(c.user_id).streak = c.streak || 0; });
+    (banners || []).forEach((b) => { ensure(b.user_id).bannerCount++; });
+
+    allUsers = Object.values(byId).sort((a, b) => b.coins - a.coins);
+    document.getElementById('statTotalUsers').textContent = allUsers.length;
+    document.getElementById('statTotalCoins').textContent = allUsers.reduce((s, u) => s + u.coins, 0).toLocaleString('id-ID');
+    renderUserList();
+  } catch (e) {
+    document.getElementById('userList').innerHTML =
+      '<div class="empty-state">❌ Gagal memuat data: ' + e.message + '<br>Pastikan supabase-admin-schema.sql sudah dijalankan.</div>';
+  }
+}
+
+window.renderUserList = function () {
+  const q = document.getElementById('searchUsers').value.trim().toLowerCase();
+  const filtered = !q ? allUsers : allUsers.filter((u) =>
+    (u.display_name || '').toLowerCase().includes(q) || u.uid.toLowerCase().includes(q)
+  );
+  const el = document.getElementById('userList');
+  if (!filtered.length) { el.innerHTML = '<div class="empty-state">Gak ada pengguna ditemukan.</div>'; return; }
+  el.innerHTML = filtered.map((u) => `
+    <div class="user-row">
+      <div class="user-row-top">
+        <img class="user-avatar" src="${u.avatar_url || ''}" onerror="this.style.background='#2a2a2a'">
+        <div class="user-body">
+          <div class="user-name">${escapeHtml(u.display_name || 'Tanpa Nama')}</div>
+          <div class="user-meta">Streak check-in: Hari ${u.streak} • Banner dimiliki: ${u.bannerCount}</div>
+          <div class="user-uid">${u.uid}</div>
+        </div>
+        <div class="user-coins">⚡ ${u.coins.toLocaleString('id-ID')}</div>
+        <div class="coin-add-form">
+          <input type="number" id="coinInput_${u.uid}" placeholder="50">
+          <button onclick="grantCoins('${u.uid}')">+ Kasih</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+};
+
+window.grantCoins = async function (uid) {
+  const input = document.getElementById('coinInput_' + uid);
+  const amount = parseInt(input.value, 10);
+  if (!amount || amount <= 0) { alert('Masukin jumlah koin yang valid dulu'); return; }
+  try {
+    const u = allUsers.find((x) => x.uid === uid);
+    const nextBalance = (u?.coins || 0) + amount;
+    const { error } = await supabase.from('coins').upsert({ user_id: uid, balance: nextBalance, updated_at: new Date().toISOString() });
+    if (error) throw error;
+    if (u) u.coins = nextBalance;
+    input.value = '';
+    renderUserList();
+    document.getElementById('statTotalCoins').textContent = allUsers.reduce((s, x) => s + x.coins, 0).toLocaleString('id-ID');
+  } catch (e) {
+    alert('❌ Gagal kasih koin: ' + e.message + '\n\nCek supabase-admin-schema.sql udah dijalankan & UID kamu ada di tabel admin_uids.');
+  }
+};
+
+async function loadChat() {
+  try {
+    const { data, error } = await supabase.from('chat_messages').select('*').order('created_at', { ascending: false }).limit(100);
+    if (error) throw error;
+    renderChat(data || []);
+  } catch (e) {
+    document.getElementById('chatList').innerHTML = '<div class="empty-state">❌ Gagal memuat chat: ' + e.message + '</div>';
+  }
+}
+
+function renderChat(rows) {
+  const el = document.getElementById('chatList');
+  if (!rows.length) { el.innerHTML = '<div class="empty-state">Belum ada pesan.</div>'; return; }
+  el.innerHTML = rows.map((m) => `
+    <div class="chat-row">
+      <div class="chat-row-body">
+        <div class="chat-row-author">${escapeHtml(m.author)}</div>
+        <div class="chat-row-text">${escapeHtml(m.text)}</div>
+        <div class="chat-row-time">${new Date(m.created_at).toLocaleString('id-ID')}</div>
+      </div>
+      <button class="chat-del-btn" onclick="deleteChatMessage('${m.id}')">Hapus</button>
+    </div>
+  `).join('');
+}
+
+window.deleteChatMessage = async function (id) {
+  if (!confirm('Hapus pesan ini?')) return;
+  try {
+    const { error } = await supabase.from('chat_messages').delete().eq('id', id);
+    if (error) throw error;
+    loadChat();
+  } catch (e) {
+    alert('❌ Gagal hapus pesan: ' + e.message);
+  }
+};
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+</script>
+</body>
+</html>
