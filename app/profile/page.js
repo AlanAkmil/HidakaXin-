@@ -112,8 +112,8 @@ export default function ProfilePage() {
       <div className="relative overflow-hidden bg-gradient-to-br from-accent to-accent-600 px-5 pb-6 pt-8 text-white">
         {bannerUrl ? (
           <>
-            <video src={bannerUrl} muted loop playsInline autoPlay className="absolute inset-0 h-full w-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/35 to-black/55" />
+            <video src={bannerUrl} muted loop playsInline autoPlay className="absolute inset-0 h-full w-full object-cover opacity-30" />
+            <div className="absolute inset-0 bg-black/70" />
           </>
         ) : (
           <svg className="pointer-events-none absolute -right-6 -top-6 h-40 w-40 text-white/10" viewBox="0 0 24 24" fill="currentColor">
