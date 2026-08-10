@@ -74,8 +74,8 @@ export default function ChatPage() {
       <div className="relative flex-1 overflow-hidden rounded-2xl border border-line shadow-card">
         {bannerUrl && (
           <>
-            <video src={bannerUrl} muted loop playsInline autoPlay className="absolute inset-0 h-full w-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-b from-paper/60 via-paper/75 to-paper/90" />
+            <video src={bannerUrl} muted loop playsInline autoPlay className="absolute inset-0 h-full w-full object-cover opacity-15" />
+            <div className="absolute inset-0 bg-paper/90" />
           </>
         )}
         <div className={`relative h-full space-y-2.5 overflow-y-auto p-3 ${!bannerUrl ? 'bg-paper-card' : ''}`}>
