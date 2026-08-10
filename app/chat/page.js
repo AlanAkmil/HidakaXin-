@@ -28,10 +28,9 @@ export default function ChatPage() {
       }
     });
 
-    getSelectedBanner().then((id) => {
-      const item = BANNER_THEMES.find((b) => b.id === id);
-      if (active) setBannerUrl(item?.url || null);
-    });
+    const id = getSelectedBanner();
+    const item = BANNER_THEMES.find((b) => b.id === id);
+    setBannerUrl(item?.url || null);
 
     // New messages arrive here in realtime for everyone connected — this
     // is what makes the chat actually shared instead of per-device.
