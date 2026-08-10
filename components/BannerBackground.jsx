@@ -29,8 +29,8 @@ export default function BannerBackground() {
 
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-      <video src={url} muted loop playsInline autoPlay className="h-full w-full object-cover opacity-40" />
-      <div className="absolute inset-0 bg-gradient-to-b from-paper/70 via-paper/85 to-paper" />
+      <video src={url} muted loop playsInline autoPlay className="h-full w-full object-cover opacity-70" />
+      <div className="absolute inset-0 bg-gradient-to-b from-paper/30 via-paper/55 to-paper/80" />
     </div>
   );
 }
