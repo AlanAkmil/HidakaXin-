@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { getFavorites, getHistory, getProfile, setProfileName, migrateLocalDataToAccount, trackMissionProgress, getSelectedBanner, pullMissionDataFromServer, syncProfileToServer } from '../../lib/store';
 import { BANNER_THEMES } from '../../lib/banners';
 import { supabase } from '../../lib/supabaseClient';
-import BannerBackground from '../../components/BannerBackground';
 
 const SECTIONS = [
   {
@@ -110,12 +109,11 @@ export default function ProfilePage() {
 
   return (
     <div className="mx-auto max-w-3xl pb-8">
-      <BannerBackground />
       <div className="relative overflow-hidden bg-gradient-to-br from-accent to-accent-600 px-5 pb-6 pt-8 text-white">
         {bannerUrl ? (
           <>
             <video src={bannerUrl} muted loop playsInline autoPlay className="absolute inset-0 h-full w-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/35 to-black/55" />
           </>
         ) : (
           <svg className="pointer-events-none absolute -right-6 -top-6 h-40 w-40 text-white/10" viewBox="0 0 24 24" fill="currentColor">
