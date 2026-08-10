@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getFavorites, getHistory, getProfile, setProfileName, migrateLocalDataToAccount, trackMissionProgress, getSelectedBanner, pullMissionDataFromServer } from '../../lib/store';
+import { getFavorites, getHistory, getProfile, setProfileName, migrateLocalDataToAccount, trackMissionProgress, getSelectedBanner, pullMissionDataFromServer, syncProfileToServer } from '../../lib/store';
 import { BANNER_THEMES } from '../../lib/banners';
 import { supabase } from '../../lib/supabaseClient';
 import BannerBackground from '../../components/BannerBackground';
@@ -91,6 +91,11 @@ export default function ProfilePage() {
   }, []);
 
   const avatarUrl = session?.user?.user_metadata?.avatar_url || session?.user?.user_metadata?.picture || null;
+
+  useEffect(() => {
+    if (session) syncProfileToServer(name, avatarUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, name, avatarUrl]);
 
   function saveName() {
     const trimmed = draft.trim() || 'Penonton';
