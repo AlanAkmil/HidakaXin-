@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { getChatMessages, sendChatMessage, subscribeChatMessages, isMyChatMessage, getProfile, setProfileName, trackMissionProgress } from '../../lib/store';
-import BannerBackground from '../../components/BannerBackground';
+import { getChatMessages, sendChatMessage, subscribeChatMessages, isMyChatMessage, getProfile, setProfileName, trackMissionProgress, getSelectedBanner } from '../../lib/store';
+import { BANNER_THEMES } from '../../lib/banners';
 
 function formatTime(ts) {
   return new Date(ts).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
@@ -13,6 +13,7 @@ export default function ChatPage() {
   const [text, setText] = useState('');
   const [name, setName] = useState('');
   const [loaded, setLoaded] = useState(false);
+  const [bannerUrl, setBannerUrl] = useState(null);
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -25,6 +26,11 @@ export default function ChatPage() {
         setMessages(data);
         setLoaded(true);
       }
+    });
+
+    getSelectedBanner().then((id) => {
+      const item = BANNER_THEMES.find((b) => b.id === id);
+      if (active) setBannerUrl(item?.url || null);
     });
 
     // New messages arrive here in realtime for everyone connected — this
@@ -55,47 +61,55 @@ export default function ChatPage() {
     // the shown list in sync with what's really in the database.
     await sendChatMessage({ author, text: trimmed });
     trackMissionProgress('chat', 1);
-    trackMissionProgress('chat', 1);
   }
 
   return (
     <div className="mx-auto flex h-[calc(100vh-64px-84px)] max-w-3xl flex-col px-4 py-4">
-      <BannerBackground />
       <div className="mb-3">
         <h1 className="font-display text-xl font-extrabold text-ink">Chat Publik</h1>
         <p className="text-xs text-ink-faint">Ngobrol bareng semua orang yang lagi buka HidakaXin, realtime.</p>
       </div>
 
-      <div className="flex-1 space-y-2.5 overflow-y-auto rounded-2xl border border-line bg-paper-card p-3 shadow-card">
-        {loaded && messages.length === 0 && (
-          <p className="py-10 text-center text-sm text-ink-faint">Belum ada obrolan. Mulai duluan yuk!</p>
+      {/* Banner cuma jadi background KOTAK CHAT ini doang, gak nutupin
+          seluruh halaman — biar bubble-nya tetep gampang dibaca. */}
+      <div className="relative flex-1 overflow-hidden rounded-2xl border border-line shadow-card">
+        {bannerUrl && (
+          <>
+            <video src={bannerUrl} muted loop playsInline autoPlay className="absolute inset-0 h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-b from-paper/60 via-paper/75 to-paper/90" />
+          </>
         )}
-        {messages.map((m) => {
-          const mine = isMyChatMessage(m);
-          return (
-            <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
-              <div className={`flex max-w-[78%] gap-2 ${mine ? 'flex-row-reverse' : ''}`}>
-                {!mine && (
-                  <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-accent-50 text-[11px] font-bold text-accent">
-                    {m.author.slice(0, 1).toUpperCase()}
+        <div className={`relative h-full space-y-2.5 overflow-y-auto p-3 ${!bannerUrl ? 'bg-paper-card' : ''}`}>
+          {loaded && messages.length === 0 && (
+            <p className="py-10 text-center text-sm text-ink-faint">Belum ada obrolan. Mulai duluan yuk!</p>
+          )}
+          {messages.map((m) => {
+            const mine = isMyChatMessage(m);
+            return (
+              <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+                <div className={`flex max-w-[78%] gap-2 ${mine ? 'flex-row-reverse' : ''}`}>
+                  {!mine && (
+                    <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-accent-50 text-[11px] font-bold text-accent shadow">
+                      {m.author.slice(0, 1).toUpperCase()}
+                    </div>
+                  )}
+                  <div
+                    className={`min-w-0 rounded-2xl px-3 py-2 shadow ${
+                      mine ? 'rounded-tr-sm bg-accent text-white' : 'rounded-tl-sm bg-paper-card text-ink'
+                    }`}
+                  >
+                    {!mine && <p className="mb-0.5 text-xs font-bold text-accent">{m.author}</p>}
+                    <p className={`break-words text-sm ${mine ? 'text-white' : 'text-ink'}`}>{m.text}</p>
+                    <p className={`mt-0.5 text-right text-[10px] ${mine ? 'text-white/70' : 'text-ink-faint'}`}>
+                      {formatTime(m.createdAt)}
+                    </p>
                   </div>
-                )}
-                <div
-                  className={`min-w-0 rounded-2xl px-3 py-2 ${
-                    mine ? 'rounded-tr-sm bg-accent text-white' : 'rounded-tl-sm bg-paper-soft text-ink'
-                  }`}
-                >
-                  {!mine && <p className="mb-0.5 text-xs font-bold text-accent">{m.author}</p>}
-                  <p className={`break-words text-sm ${mine ? 'text-white' : 'text-ink'}`}>{m.text}</p>
-                  <p className={`mt-0.5 text-right text-[10px] ${mine ? 'text-white/70' : 'text-ink-faint'}`}>
-                    {formatTime(m.createdAt)}
-                  </p>
                 </div>
               </div>
-            </div>
-          );
-        })}
-        <div ref={bottomRef} />
+            );
+          })}
+          <div ref={bottomRef} />
+        </div>
       </div>
 
       <form onSubmit={handleSend} className="mt-3 flex items-center gap-2">
