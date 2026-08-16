@@ -3,9 +3,11 @@ import JadwalCard from '../../components/JadwalCard';
 import MissionTrack from '../../components/MissionTrack';
 import scraper from '../../lib/scraper';
 import sanka from '../../lib/sankaScraper';
+import samehadaku from '../../lib/samehadakuScraper';
 import anichin from '../../lib/anichinScraper';
 import { getDonghuaSource } from '../../lib/donghuaSource';
-import { normalizeDonghua, normalizeAnichin, normalizeSanka, shuffleTogether, findScheduleKeyForDay, DAY_NAMES_ID } from '../../lib/normalize';
+import { getAnimeSource } from '../../lib/animeSource';
+import { normalizeDonghua, normalizeAnichin, normalizeSanka, extractSankaScheduleEntries, shuffleTogether, findScheduleKeyForDay, DAY_NAMES_ID } from '../../lib/normalize';
 
 export const revalidate = 600;
 
@@ -13,9 +15,11 @@ const DAY_SHORT = { Minggu: 'MIN', Senin: 'SEN', Selasa: 'SEL', Rabu: 'RAB', Kam
 
 async function getSchedules() {
   const source = getDonghuaSource();
+  const animeSource = getAnimeSource();
+  const animeClient = animeSource === 'samehadaku' ? samehadaku : sanka;
   const [donghuaPayload, animePayload] = await Promise.all([
     source === 'anichin' ? anichin.schedule().catch(() => null) : scraper.release().then((r) => r?.data?.schedule).catch(() => null),
-    sanka.schedule().catch(() => null)
+    animeClient.schedule().catch(() => null)
   ]);
 
   const donghuaRaw = donghuaPayload || {};
@@ -25,11 +29,12 @@ async function getSchedules() {
     donghua[day] = (items || []).map(normalizer);
   }
 
-  // Sanka's schedule() returns [{ day: 'Senin', anime_list: [...] }, ...] —
-  // day names already match DAY_NAMES_ID, so key directly off them.
+  // Otakudesu returns a flat array; Samehadaku wraps it in { days: [...] }
+  // with English day names and a camelCase field — extractSankaScheduleEntries
+  // normalizes both into the same [{ day, animeList }] shape.
   const anime = {};
-  for (const entry of (animePayload || [])) {
-    anime[entry.day] = (entry.anime_list || []).map(normalizeSanka);
+  for (const entry of extractSankaScheduleEntries(animePayload, animeSource)) {
+    anime[entry.day] = entry.animeList.map((i) => normalizeSanka(i, animeSource));
   }
 
   return { donghua, anime, source };
@@ -43,7 +48,12 @@ export default async function JadwalPage({ searchParams }) {
   const activeIdx = DAY_NAMES_ID.indexOf(activeDay);
   const dayIdx = activeIdx >= 0 ? activeIdx : todayIndex;
 
-  const animeList = anime[activeDay] || [];
+  // anime{} keys are English for Samehadaku ("Saturday") but Indonesian for
+  // Otakudesu ("Sabtu") — match via findScheduleKeyForDay like donghua does,
+  // since a plain anime[activeDay] lookup would miss Samehadaku entirely.
+  const animeKeys = Object.keys(anime);
+  const animeMatch = findScheduleKeyForDay(animeKeys, dayIdx);
+  const animeList = animeMatch ? anime[animeMatch] : [];
 
   const donghuaKeys = Object.keys(donghua);
   const donghuaMatch = findScheduleKeyForDay(donghuaKeys, dayIdx);
@@ -126,6 +136,7 @@ function slugFromUrl(url) {
 function hrefForScheduleItem(item) {
   const slug = slugFromUrl(item.url);
   if (item.source === 'anichin') return `/anime-ac/${slug}`;
+  if (item.source === 'samehadaku') return `/anime-same/${slug}`;
   if (item.source === 'sanka') return `/anime-sanka/${slug}`;
   return `/anime/${slug}`;
 }
