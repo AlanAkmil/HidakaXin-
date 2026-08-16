@@ -15,10 +15,13 @@ export default function AnimeRow({ item, watchMode = false }) {
   const slug = slugFromUrl(item.url);
   const isAnichin = item.source === 'anichin';
   const isSanka = item.source === 'sanka';
+  const isSamehadaku = item.source === 'samehadaku';
   const href = isWebtoons
     ? item.url
     : isAnichin
     ? (watchMode ? `/watch-ac/${slug}` : `/anime-ac/${slug}`)
+    : isSamehadaku
+    ? (watchMode ? `/watch-same/${slug}` : `/anime-same/${slug}`)
     : isSanka
     ? (watchMode ? `/watch-sanka/${slug}` : `/anime-sanka/${slug}`)
     : (watchMode ? `/watch/${slug}` : `/anime/${slug}`);
@@ -54,7 +57,7 @@ export default function AnimeRow({ item, watchMode = false }) {
             </span>
           )}
           <span className="ml-auto rounded-full bg-paper-soft px-1.5 py-0.5 text-[9px] font-bold uppercase text-ink-faint">
-            {isWebtoons ? 'Webtoon' : isSanka ? 'Anime' : isAnichin ? 'Anichin' : 'Donghua'}
+            {isWebtoons ? 'Webtoon' : isSamehadaku ? 'Samehadaku' : isSanka ? 'Anime' : isAnichin ? 'Anichin' : 'Donghua'}
           </span>
         </div>
       </div>
