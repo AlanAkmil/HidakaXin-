@@ -22,10 +22,13 @@ export default function AnimeCard({ item, index = 0, watchMode = false }) {
   const slug = slugFromUrl(item.url);
   const isAnichin = item.source === 'anichin';
   const isSanka = item.source === 'sanka';
+  const isSamehadaku = item.source === 'samehadaku';
   const href = isWebtoons
     ? item.url // full external webtoons.com URL — not an internal slug
     : isAnichin
     ? (watchMode ? `/watch-ac/${slug}` : `/anime-ac/${slug}`)
+    : isSamehadaku
+    ? (watchMode ? `/watch-same/${slug}` : `/anime-same/${slug}`)
     : isSanka
     ? (watchMode ? `/watch-sanka/${slug}` : `/anime-sanka/${slug}`)
     : (watchMode ? `/watch/${slug}` : `/anime/${slug}`);
@@ -52,7 +55,7 @@ export default function AnimeCard({ item, index = 0, watchMode = false }) {
             <div className="flex h-full w-full items-center justify-center text-ink-faint font-display">?</div>
           )}
           <span className="absolute right-2 top-2 rounded-full bg-paper-card/90 px-2 py-0.5 text-[9px] font-bold uppercase text-ink-soft shadow">
-            {isWebtoons ? 'Webtoon' : isSanka ? 'Anime' : isAnichin ? 'Anichin' : 'Donghua'}
+            {isWebtoons ? 'Webtoon' : isSamehadaku ? 'Samehadaku' : isSanka ? 'Anime' : isAnichin ? 'Anichin' : 'Donghua'}
           </span>
           {(item.episode || item.status) && (
             <span className="absolute left-2 top-2 rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold text-white shadow">
