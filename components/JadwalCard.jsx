@@ -14,7 +14,14 @@ export default function JadwalCard({ item }) {
   const slug = slugFromUrl(item.url);
   const isAnichin = item.source === 'anichin';
   const isSanka = item.source === 'sanka';
-  const href = isAnichin ? `/anime-ac/${slug}` : isSanka ? `/anime-sanka/${slug}` : `/anime/${slug}`;
+  const isSamehadaku = item.source === 'samehadaku';
+  const href = isAnichin
+    ? `/anime-ac/${slug}`
+    : isSamehadaku
+    ? `/anime-same/${slug}`
+    : isSanka
+    ? `/anime-sanka/${slug}`
+    : `/anime/${slug}`;
   const tag = item.genres?.[0] || null;
   const showTime = item.time && item.time !== item.episode;
 
@@ -28,7 +35,7 @@ export default function JadwalCard({ item }) {
           <div className="flex h-full w-full items-center justify-center text-ink-faint font-display">?</div>
         )}
         <span className="absolute right-2 top-2 rounded-full bg-paper-card/90 px-2 py-0.5 text-[9px] font-bold uppercase text-ink-soft shadow">
-          {isSanka ? 'Anime' : isAnichin ? 'Anichin' : 'Donghua'}
+          {isSamehadaku ? 'Samehadaku' : isSanka ? 'Anime' : isAnichin ? 'Anichin' : 'Donghua'}
         </span>
       </div>
       <div className="mt-2 px-0.5">
