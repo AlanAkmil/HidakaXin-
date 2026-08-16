@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 // `qualities` shape (from sankaScraper.episode().server.qualities):
 // [{ title: '360p', serverList: [{ title: 'filedon', serverId, href }, ...] }, ...]
-export default function SankaPlayer({ defaultUrl, qualities = [] }) {
+export default function SankaPlayer({ defaultUrl, qualities = [], serverEndpoint = '/api/sanka-server' }) {
   const [activeUrl, setActiveUrl] = useState(defaultUrl);
   const [activeServerId, setActiveServerId] = useState(null);
   const [loadingServerId, setLoadingServerId] = useState(null);
@@ -16,7 +16,7 @@ export default function SankaPlayer({ defaultUrl, qualities = [] }) {
     setLoadingServerId(serverId);
     setError(false);
     try {
-      const res = await fetch(`/api/sanka-server?id=${encodeURIComponent(serverId)}`);
+      const res = await fetch(`${serverEndpoint}?id=${encodeURIComponent(serverId)}`);
       const data = await res.json();
       if (data?.url) {
         setActiveUrl(data.url);
