@@ -4,8 +4,10 @@ import Pagination from '../../components/Pagination';
 import SearchBar from '../../components/SearchBar';
 import scraper from '../../lib/scraper';
 import sanka from '../../lib/sankaScraper';
+import samehadaku from '../../lib/samehadakuScraper';
 import anichin from '../../lib/anichinScraper';
 import { getDonghuaSource } from '../../lib/donghuaSource';
+import { getAnimeSource } from '../../lib/animeSource';
 import { STUDIOS } from '../../lib/studios';
 import { normalizeDonghua, normalizeAnichin, normalizeSanka, shuffleTogether } from '../../lib/normalize';
 import MissionTrack from '../../components/MissionTrack';
@@ -28,15 +30,17 @@ async function getGenres() {
 
 async function getSearch(q, page) {
   const source = getDonghuaSource();
+  const animeSource = getAnimeSource();
+  const animeClient = animeSource === 'samehadaku' ? samehadaku : sanka;
   const [donghuaPayload, animePayload] = await Promise.all([
     source === 'anichin' ? anichin.search(q, page).catch(() => null) : scraper.search(q, page).catch(() => null),
-    sanka.search(q).catch(() => null)
+    animeClient.search(q).catch(() => null)
   ]);
 
   const donghuaResults = source === 'anichin'
     ? (donghuaPayload?.items || []).map(normalizeAnichin)
     : (donghuaPayload?.data?.results || []).map(normalizeDonghua);
-  const animeResults = (animePayload?.animeList || []).map(normalizeSanka);
+  const animeResults = (animePayload?.animeList || []).map((i) => normalizeSanka(i, animeSource));
 
   return {
     results: shuffleTogether(donghuaResults, animeResults),
