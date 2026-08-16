@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import SourceMenu from './SourceMenu';
+import AnimeSourceMenu from './AnimeSourceMenu';
 
 const FULLSCREEN_PREFIXES = ['/komik/baca/', '/komik/wt/', '/novel/baca/', '/profile', '/chat'];
 
@@ -30,6 +31,7 @@ export default function TopHeader() {
             </svg>
           </Link>
           <SourceMenu />
+          <AnimeSourceMenu />
         </div>
       </div>
     </header>
