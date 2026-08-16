@@ -11,12 +11,14 @@ import ContinueReadingKomik from '../components/ContinueReadingKomik';
 import MissionTrack from '../components/MissionTrack';
 import scraper from '../lib/scraper';
 import sanka from '../lib/sankaScraper';
+import samehadaku from '../lib/samehadakuScraper';
 import anichin from '../lib/anichinScraper';
 import manga from '../lib/mangaScraper';
 import webtoons from '../lib/webtoonsScraper';
 import { getLatestMeioNovels } from '../lib/meioNovelScraper';
 import { getDonghuaSource } from '../lib/donghuaSource';
-import { normalizeDonghua, normalizeAnichin, normalizeSanka, normalizeWestmanhwa, normalizeWebtoon, deriveSeriesUrl, shuffleTogether, findScheduleKeyForDay, DAY_NAMES_ID } from '../lib/normalize';
+import { getAnimeSource } from '../lib/animeSource';
+import { normalizeDonghua, normalizeAnichin, normalizeSanka, extractSankaHomeLists, normalizeWestmanhwa, normalizeWebtoon, deriveSeriesUrl, shuffleTogether, findScheduleKeyForDay, DAY_NAMES_ID } from '../lib/normalize';
 
 export const revalidate = 300;
 
@@ -77,9 +79,11 @@ async function getNovels() {
 
 async function getData() {
   const source = getDonghuaSource();
+  const animeSource = getAnimeSource();
+  const animeClient = animeSource === 'samehadaku' ? samehadaku : sanka;
   const [donghua, sankaHome, komikPayload, webtoonPayload, novels] = await Promise.all([
     getDonghuaData(source),
-    sanka.home().catch(() => null),
+    animeClient.home().catch(() => null),
     manga.home().catch(() => null),
     webtoons.trending('daily').catch(() => []),
     getNovels()
@@ -87,9 +91,10 @@ async function getData() {
 
   return {
     source,
+    animeSource,
     donghua,
-    sankaOngoing: sankaHome?.ongoing?.animeList || [],
-    sankaCompleted: sankaHome?.completed?.animeList || [],
+    sankaOngoing: extractSankaHomeLists(sankaHome, animeSource).ongoing,
+    sankaCompleted: extractSankaHomeLists(sankaHome, animeSource).completed,
     komik: shuffleTogether(
       (komikPayload?.items || []).map(normalizeWestmanhwa),
       (webtoonPayload || []).map(normalizeWebtoon)
@@ -99,10 +104,10 @@ async function getData() {
 }
 
 export default async function HomePage() {
-  const { donghua, sankaOngoing, sankaCompleted, komik, novels } = await getData();
+  const { donghua, animeSource, sankaOngoing, sankaCompleted, komik, novels } = await getData();
 
-  const mergedLatest = shuffleTogether(donghua.latest, sankaOngoing.map(normalizeSanka));
-  const mergedPopular = shuffleTogether(donghua.popular, sankaCompleted.map(normalizeSanka));
+  const mergedLatest = shuffleTogether(donghua.latest, sankaOngoing.map((i) => normalizeSanka(i, animeSource)));
+  const mergedPopular = shuffleTogether(donghua.popular, sankaCompleted.map((i) => normalizeSanka(i, animeSource)));
   const today = mergeTodaySchedule(donghua.schedule, null);
 
   return (
@@ -136,7 +141,7 @@ export default async function HomePage() {
           <div className="hide-scrollbar flex gap-3 overflow-x-auto pb-1">
             {shuffleTogether(
               donghua.weeklyRow.slice(0, 8),
-              sankaOngoing.slice(0, 8).map(normalizeSanka)
+              sankaOngoing.slice(0, 8).map((i) => normalizeSanka(i, animeSource))
             ).map((item, i) => (
               <AnimeRow key={item.url + i} item={item} />
             ))}
